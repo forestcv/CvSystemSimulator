@@ -2,6 +2,9 @@
 
 
 #include "DefaultDevice.h"
+#include "CameraBroadcastWidget.h"
+#include "Blueprint/UserWidget.h"
+#include "Engine/TextureRenderTarget2D.h"
 
 // Sets default values
 ADefaultDevice::ADefaultDevice()
@@ -22,12 +25,32 @@ ADefaultDevice::ADefaultDevice()
 
 	// Create a movement component
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
+
+	// Create a scene capture component
+	SceneCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureComponent"));
+	SceneCaptureComponent->SetupAttachment(RootComponent);
+	SceneCaptureComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f)); // Adjust as needed
 }
 
 // Called when the game starts or when spawned
 void ADefaultDevice::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Создаем рендер-таргет и назначаем его камере
+	UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
+	RenderTarget->InitAutoFormat(1024, 1024);
+	SceneCaptureComponent->TextureTarget = RenderTarget;
+
+	SceneCaptureComponent->TextureTarget = RenderTarget;
+
+	// Создаем виджет и добавляем его на экран
+	if (UCameraBroadcastWidget* CaptureWidget = CreateWidget<UCameraBroadcastWidget>(GetWorld(), 
+		UCameraBroadcastWidget::StaticClass()))
+	{
+		CaptureWidget->AddToViewport();
+		CaptureWidget->SetRenderTargetTexture(RenderTarget);
+	}
 	
 }
 

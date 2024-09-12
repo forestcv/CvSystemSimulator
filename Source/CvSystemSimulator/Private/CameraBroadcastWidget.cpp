@@ -5,7 +5,7 @@
 
 void UCameraBroadcastWidget::SetRenderTargetTexture(UTextureRenderTarget2D* RenderTarget)
 {
-    if (CaptureImage && CaptureMaterialParent)
+    if (CameraBroadcastImage && CaptureMaterialParent)
     {
         if (!CaptureMaterialInstance)
         {
@@ -15,7 +15,7 @@ void UCameraBroadcastWidget::SetRenderTargetTexture(UTextureRenderTarget2D* Rend
         if (CaptureMaterialInstance)
         {
             CaptureMaterialInstance->SetTextureParameterValue(TEXT("RenderTargetTexture"), RenderTarget);
-            CaptureImage->SetBrushFromMaterial(CaptureMaterialInstance);
+            CameraBroadcastImage->SetBrushFromMaterial(CaptureMaterialInstance);
         }
     }
 }

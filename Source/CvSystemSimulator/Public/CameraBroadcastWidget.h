@@ -15,7 +15,7 @@ public:
 
 protected:
     UPROPERTY(meta = (BindWidget))
-        class UImage* CaptureImage;
+        class UImage* CameraBroadcastImage;
 
     UPROPERTY(EditDefaultsOnly, Category = "Capture")
         class UMaterialInterface* CaptureMaterialParent;

@@ -45,11 +45,11 @@ void ADefaultDevice::BeginPlay()
 	SceneCaptureComponent->TextureTarget = RenderTarget;
 
 	// Создаем виджет и добавляем его на экран
-	if (UCameraBroadcastWidget* CameraBroadcastWidget = CreateWidget<UCameraBroadcastWidget>(GetWorld(),
+	if (UCameraBroadcastWidget* CaptureWidget = CreateWidget<UCameraBroadcastWidget>(GetWorld(), 
 		UCameraBroadcastWidget::StaticClass()))
 	{
-		CameraBroadcastWidget->AddToViewport();
-		CameraBroadcastWidget->SetRenderTargetTexture(RenderTarget);
+		CaptureWidget->AddToViewport();
+		CaptureWidget->SetRenderTargetTexture(RenderTarget);
 	}
 	
 }

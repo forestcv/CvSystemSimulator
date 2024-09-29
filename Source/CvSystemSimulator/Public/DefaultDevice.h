@@ -7,6 +7,9 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/Image.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "DefaultDevice.generated.h"
 
 UCLASS()
@@ -44,4 +47,25 @@ public:
 	// Movement components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 		UFloatingPawnMovement* MovementComponent;
+
+	/////
+
+	// Виджет для отображения картинки
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+		TSubclassOf<UUserWidget> ImageWidgetClass;
+
+	UUserWidget* ImageWidgetInstance;
+
+	// Ссылка на компонент Image
+	UImage* ColorChangingImage;
+
+	// Текущий цвет
+	FLinearColor CurrentColor;
+
+	// Время для смены цвета
+	float ColorChangeTime;
+	float TimeSinceLastColorChange;
+
+	// Изменение цвета
+	void ChangeColor();
 };

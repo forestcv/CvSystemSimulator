@@ -22,42 +22,12 @@ ADefaultDevice::ADefaultDevice()
 
 	// Create a movement component
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
-
-	// Инициализация цветов и времени
-	CurrentColor = FLinearColor::Red; // Начальный цвет
-	ColorChangeTime = 1.0f; // Интервал смены цвета в секундах
-	TimeSinceLastColorChange = 0.0f;
 }
 
 // Called when the game starts or when spawned
 void ADefaultDevice::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Проверяем, что класс виджета был установлен
-	if (ImageWidgetClass)
-	{
-		// Создаем виджет
-		ImageWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), ImageWidgetClass);
-
-		if (ImageWidgetInstance)
-		{
-			// Добавляем виджет на экран
-			ImageWidgetInstance->AddToViewport();
-
-			// Ограничиваем размер виджета
-			ImageWidgetInstance->SetDesiredSizeInViewport(FVector2D(320.0f, 240.0f));
-
-			// Получаем компонент Image внутри виджета
-			ColorChangingImage = Cast<UImage>(ImageWidgetInstance->GetWidgetFromName(TEXT("ColorChangingImage")));
-
-			// Если компонент найден, то устанавливаем начальный цвет
-			if (ColorChangingImage)
-			{
-				ChangeColor(); // Устанавливаем начальный цвет
-			}
-		}
-	}
 	
 }
 
@@ -66,15 +36,6 @@ void ADefaultDevice::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Обновляем таймер смены цвета
-	TimeSinceLastColorChange += DeltaTime;
-
-	if (TimeSinceLastColorChange >= ColorChangeTime)
-	{
-		// Меняем цвет, когда проходит время
-		ChangeColor();
-		TimeSinceLastColorChange = 0.0f;
-	}
 }
 
 // Called to bind functionality to input
@@ -100,19 +61,6 @@ void ADefaultDevice::MoveRight(float Value)
 	if (Value != 0.0f)
 	{
 		AddMovementInput(GetActorRightVector(), Value);
-	}
-}
-
-void ADefaultDevice::ChangeColor()
-{
-	// Генерация случайного цвета
-	CurrentColor = FLinearColor::MakeRandomColor();
-
-	// Устанавливаем цвет в компонент Image
-	if (ColorChangingImage)
-	{
-		// Используем SetColorAndOpacity для установки цвета
-		ColorChangingImage->SetColorAndOpacity(CurrentColor);
 	}
 }
 

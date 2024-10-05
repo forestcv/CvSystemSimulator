@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,6 +7,9 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/Image.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "DefaultDevice.generated.h"
 
 UCLASS()
@@ -44,4 +47,18 @@ public:
 	// Movement components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
 		UFloatingPawnMovement* MovementComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+		TSubclassOf<UUserWidget> CameraBroadcastWidget;
+
+	UUserWidget* CameraBroadcastWidgetInstance;
+
+	UImage* ColorChangingImage;
+
+	FLinearColor CurrentColor;
+
+	float ColorChangeTime;
+	float TimeSinceLastColorChange;
+
+	void ChangeColor();
 };

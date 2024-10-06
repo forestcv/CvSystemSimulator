@@ -10,6 +10,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
+#include "Kismet/KismetRenderingLibrary.h"
 #include "DefaultDevice.generated.h"
 
 UCLASS()
@@ -40,6 +43,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
 		UCameraComponent* Camera;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CameraCapture")
+		USceneCaptureComponent2D* SceneCaptureComponent;
+
 	// Movement functions
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -61,4 +67,5 @@ public:
 	float TimeSinceLastColorChange;
 
 	void ChangeColor();
+	void UpdateWidgetImage();
 };

@@ -24,8 +24,11 @@ ADefaultDevice::ADefaultDevice()
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
 
 	CurrentColor = FLinearColor::Red;
-	ColorChangeTime = 1.0f;
+	ColorChangeTime = 0.040f;
 	TimeSinceLastColorChange = 0.0f;
+
+	SceneCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureComponent"));
+	SceneCaptureComponent->SetupAttachment(Camera);
 }
 
 // Called when the game starts or when spawned
@@ -44,13 +47,20 @@ void ADefaultDevice::BeginPlay()
 
 			ColorChangingImage = Cast<UImage>(CameraBroadcastWidgetInstance->GetWidgetFromName(TEXT("CameraBroadcastImage")));
 
-			if (ColorChangingImage)
-			{
-				ChangeColor();
-			}
+			//if (ColorChangingImage)
+			//{
+			//	ChangeColor();
+			//}
 		}
 	}
-	
+
+	if (SceneCaptureComponent)
+	{
+		UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
+		RenderTarget->InitCustomFormat(320, 240, PF_B8G8R8A8, false);
+
+		SceneCaptureComponent->TextureTarget = RenderTarget;
+	}
 }
 
 // Called every frame
@@ -61,7 +71,8 @@ void ADefaultDevice::Tick(float DeltaTime)
 	TimeSinceLastColorChange += DeltaTime;
 	if (TimeSinceLastColorChange >= ColorChangeTime)
 	{
-		ChangeColor();
+		UpdateWidgetImage();
+		//ChangeColor();
 		TimeSinceLastColorChange = 0.0f;
 	}
 }
@@ -100,3 +111,74 @@ void ADefaultDevice::ChangeColor()
 		ColorChangingImage->SetColorAndOpacity(CurrentColor);
 	}
 }
+
+void ADefaultDevice::UpdateWidgetImage()
+{
+	static int cnt = 0;
+
+	if (SceneCaptureComponent &&
+		SceneCaptureComponent->TextureTarget &&
+		CameraBroadcastWidgetInstance &&
+		ColorChangingImage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Components are valid, starting to capture image."));
+
+		// Получаем ресурс рендера таргета
+		FTextureRenderTargetResource* RenderTargetResource =
+			SceneCaptureComponent->TextureTarget->GameThread_GetRenderTargetResource();
+
+		// Создаем массив для пикселей
+		TArray<FColor> Bitmap;
+		if (RenderTargetResource->ReadPixels(Bitmap))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ReadPixels succeeded, Bitmap size: %d"), Bitmap.Num());
+
+			for (int32 i = 0; i < 320 * 240; ++i)
+			{
+				Bitmap[i].A = 255;
+				//UE_LOG(LogTemp, Error, TEXT("Bitmap: %d, %d, %d, %d"), Bitmap[i].R, Bitmap[i].G, Bitmap[i].B, Bitmap[i].A);
+			}
+
+			if (Bitmap.Num() == 320 * 240)
+			{
+				UTexture2D* Texture = UTexture2D::CreateTransient(320, 240, PF_B8G8R8A8);
+
+				void* TextureData = Texture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+				FMemory::Memcpy(TextureData, Bitmap.GetData(), Bitmap.Num() * sizeof(FColor));
+				Texture->PlatformData->Mips[0].BulkData.Unlock();
+
+				Texture->UpdateResource();
+
+				if (ColorChangingImage)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Applying texture to widget: %d"), ++cnt);
+					ColorChangingImage->SetBrushFromTexture(Texture, true);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Error, TEXT("ColorChangingImage is null!"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Bitmap size mismatch! Expected: %d, Got: %d"), 320 * 240, Bitmap.Num());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("ReadPixels failed!"));
+		}
+	}
+	else
+	{
+		if (!SceneCaptureComponent)
+			UE_LOG(LogTemp, Error, TEXT("SceneCaptureComponent is null!"));
+		if (!SceneCaptureComponent->TextureTarget)
+			UE_LOG(LogTemp, Error, TEXT("TextureTarget is null!"));
+		if (!CameraBroadcastWidgetInstance)
+			UE_LOG(LogTemp, Error, TEXT("CameraBroadcastWidgetInstance is null!"));
+		if (!ColorChangingImage)
+			UE_LOG(LogTemp, Error, TEXT("ColorChangingImage is null!"));
+	}
+}
+

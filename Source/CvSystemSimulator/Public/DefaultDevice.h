@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
@@ -28,44 +26,46 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+protected:
 	// Spring arm component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 		USpringArmComponent* SpringArm;
 
 	// Camera component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 		UCameraComponent* Camera;
 
+	// Scene Capture component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "CameraCapture")
 		USceneCaptureComponent2D* SceneCaptureComponent;
 
-	// Movement functions
-	void MoveForward(float Value);
-	void MoveRight(float Value);
-
 	// Movement components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 		UFloatingPawnMovement* MovementComponent;
 
+	// UI Widget class and instance
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> CameraBroadcastWidget;
 
 	UUserWidget* CameraBroadcastWidgetInstance;
+	UImage* CameraBroadcastImage;
 
-	UImage* ColorChangingImage;
+	// FPS for image update
+	FIntPoint CameraMatrixSize{1920, 1080};
+	int FPS = 25;
+	int DownscaleFactor = 8;
 
-	FLinearColor CurrentColor;
-
-	float ColorChangeTime;
-	float TimeSinceLastColorChange;
-
-	void ChangeColor();
+	// Handles updating the widget image
 	void UpdateWidgetImage();
+
+	// Handles movement input
+	void MoveForward(float Value);
+	void MoveRight(float Value);
 };

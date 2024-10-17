@@ -7,10 +7,9 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
-#include "Materials/MaterialInstanceDynamic.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
-#include "Kismet/KismetRenderingLibrary.h"
+#include "CameraBroadcastWidget/Controller/CameraBroadcastWidgetController.h"
 #include "DefaultDevice.generated.h"
 
 UCLASS()
@@ -50,22 +49,33 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 		UFloatingPawnMovement* MovementComponent;
 
-	// UI Widget class and instance
+	// UI Widget class
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> CameraBroadcastWidget;
 
-	UUserWidget* CameraBroadcastWidgetInstance;
-	UImage* CameraBroadcastImage;
+	// Контроллер виджета
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+		UCameraBroadcastWidgetController* WidgetController;
 
-	// FPS for image update
-	FIntPoint CameraMatrixSize{1920, 1080};
-	int FPS = 25;
+	// Downscale factor for UI resolution, editable from Blueprint
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	int DownscaleFactor = 8;
 
-	// Handles updating the widget image
-	void UpdateWidgetImage();
+	// Camera resolution and settings, editable from Blueprint
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	FIntPoint CameraMatrixSize{ 1280, 720 };
+
+	// FPS for image update, editable from Blueprint
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	int FPS = 25;
 
 	// Handles movement input
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+
+	// Updates the widget image
+	void UpdateWidgetImage();
+
+	// Function to create bitmap from render target
+	bool CreateBitmapFromRenderTarget(TArray<FColor>& OutBitmap) const;
 };

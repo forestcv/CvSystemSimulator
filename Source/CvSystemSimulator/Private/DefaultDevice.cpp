@@ -19,6 +19,11 @@ ADefaultDevice::ADefaultDevice()
 
 	SceneCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureComponent"));
 	SceneCaptureComponent->SetupAttachment(Camera);
+	SceneCaptureComponent->bCaptureEveryFrame = false;
+	SceneCaptureComponent->bCaptureOnMovement = false;
+
+	// Создание экземпляра контроллера виджета
+	WidgetController = CreateDefaultSubobject<UCameraBroadcastWidgetController>(TEXT("WidgetController"));
 }
 
 // Called when the game starts or when spawned
@@ -34,19 +39,13 @@ void ADefaultDevice::BeginPlay()
 		SceneCaptureComponent->TextureTarget = RenderTarget;
 	}
 
-	// Initialize UI widget
-	if (CameraBroadcastWidget)
+	// Рассчитываем размер виджета с учетом DownscaleFactor
+	FVector2D WidgetSize = FVector2D(CameraMatrixSize.X / DownscaleFactor, CameraMatrixSize.Y / DownscaleFactor);
+
+	// Инициализация виджета через контроллер с передачей размера
+	if (WidgetController)
 	{
-		CameraBroadcastWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), CameraBroadcastWidget);
-		if (CameraBroadcastWidgetInstance)
-		{
-			CameraBroadcastWidgetInstance->AddToViewport();
-			CameraBroadcastWidgetInstance->SetDesiredSizeInViewport(
-				FVector2D(CameraMatrixSize.X / DownscaleFactor, 
-					CameraMatrixSize.Y / DownscaleFactor));
-			CameraBroadcastImage = Cast<UImage>(CameraBroadcastWidgetInstance->
-				GetWidgetFromName(TEXT("CameraBroadcastImage")));
-		}
+		WidgetController->InitializeWidget(GetWorld(), CameraBroadcastWidget, WidgetSize);
 	}
 }
 
@@ -58,83 +57,47 @@ void ADefaultDevice::Tick(float DeltaTime)
 	static float TimeSinceLastUpdate = 0.0f;
 	TimeSinceLastUpdate += DeltaTime;
 
-	const float ImageUpdateInterval = 1.0f / FPS;  // Convert FPS to seconds
+	static const float ImageUpdateInterval = 1.0f / FPS;
 
 	if (TimeSinceLastUpdate >= ImageUpdateInterval)
 	{
-		UpdateWidgetImage();
+		TArray<FColor> Bitmap;
+		if (CreateBitmapFromRenderTarget(Bitmap))
+		{
+			WidgetController->UpdateWidgetImage(Bitmap, CameraMatrixSize);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("ADefaultDevice: Failed to create bitmap from render target!"));
+		}
+
 		TimeSinceLastUpdate = 0.0f;
 	}
 }
 
-// Called to bind functionality to input
-void ADefaultDevice::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+// Функция для создания битмапа из рендер-таргета
+bool ADefaultDevice::CreateBitmapFromRenderTarget(TArray<FColor>& OutBitmap) const
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	// Bind movement functions
-	PlayerInputComponent->BindAxis("MoveForward", this, &ADefaultDevice::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &ADefaultDevice::MoveRight);
-}
-
-// Handles forward movement
-void ADefaultDevice::MoveForward(float Value)
-{
-	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	if (!SceneCaptureComponent || !SceneCaptureComponent->TextureTarget)
 	{
-		AddMovementInput(GetActorForwardVector(), Value);
-	}
-}
-
-// Handles right movement
-void ADefaultDevice::MoveRight(float Value)
-{
-	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
-	{
-		AddMovementInput(GetActorRightVector(), Value);
-	}
-}
-
-// Updates the widget image
-void ADefaultDevice::UpdateWidgetImage()
-{
-	if (!SceneCaptureComponent ||
-		!SceneCaptureComponent->TextureTarget ||
-		!CameraBroadcastWidgetInstance ||
-		!CameraBroadcastImage)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Widget or SceneCapture components are null!"));
-		return;
+		UE_LOG(LogTemp, Error, TEXT("ADefaultDevice: SceneCaptureComponent or TextureTarget is null!"));
+		return false;
 	}
 
-	FTextureRenderTargetResource* RenderTargetResource =
-		SceneCaptureComponent->TextureTarget->GameThread_GetRenderTargetResource();
+	SceneCaptureComponent->CaptureScene();
+	FTextureRenderTargetResource* RenderTargetResource = SceneCaptureComponent->TextureTarget->GameThread_GetRenderTargetResource();
 
-	TArray<FColor> Bitmap;
-	if (RenderTargetResource->ReadPixels(Bitmap))
+	// Чтение пикселей с рендер-таргета
+	if (RenderTargetResource->ReadPixels(OutBitmap))
 	{
-		// Ensure the bitmap has the correct size
-		for (FColor& Pixel : Bitmap)
-		{
-			Pixel.A = 255;  // Set alpha to fully opaque
-		}
-
-		// Create a new texture and copy the bitmap to it
-		UTexture2D* Texture = UTexture2D::CreateTransient(
-			CameraMatrixSize.X,
-			CameraMatrixSize.Y,
-			PF_B8G8R8A8);
-
-		void* TextureData = Texture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-		FMemory::Memcpy(TextureData, Bitmap.GetData(), Bitmap.Num() * sizeof(FColor));
-		Texture->PlatformData->Mips[0].BulkData.Unlock();
-		Texture->UpdateResource();
-
-		// Update the broadcast image
-		CameraBroadcastImage->SetBrushFromTexture(Texture, true);
+		// Обработка альфа-канала для всех пикселей
+		//for (FColor& Pixel : OutBitmap)
+		//{
+		//	Pixel.A = 255; // Устанавливаем полную непрозрачность
+		//}
+		return true;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("ReadPixels failed!"));
-	}
+
+	UE_LOG(LogTemp, Error, TEXT("ADefaultDevice: ReadPixels failed!"));
+	return false;
 }

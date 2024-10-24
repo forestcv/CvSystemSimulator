@@ -39,13 +39,11 @@ void ADefaultDevice::BeginPlay()
 		SceneCaptureComponent->TextureTarget = RenderTarget;
 	}
 
-	// Рассчитываем размер виджета с учетом DownscaleFactor
-	FVector2D WidgetSize = FVector2D(CameraMatrixSize.X / DownscaleFactor, CameraMatrixSize.Y / DownscaleFactor);
-
 	// Инициализация виджета через контроллер с передачей размера
 	if (WidgetController)
 	{
-		WidgetController->InitializeWidget(GetWorld(), CameraBroadcastWidget, WidgetSize);
+		WidgetController->InitializeWidget(GetWorld(), CameraBroadcastWidget, 
+			FVector2D(CameraMatrixSize.X / DownscaleFactor, CameraMatrixSize.Y / DownscaleFactor));
 	}
 }
 
@@ -72,6 +70,32 @@ void ADefaultDevice::Tick(float DeltaTime)
 		}
 
 		TimeSinceLastUpdate = 0.0f;
+	}
+}
+
+void ADefaultDevice::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// Bind movement functions
+	PlayerInputComponent->BindAxis("MoveForward", this, &ADefaultDevice::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ADefaultDevice::MoveRight);
+}
+
+void ADefaultDevice::MoveForward(float Value)
+{
+	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	{
+		AddMovementInput(GetActorForwardVector(), Value);
+	}
+}
+
+// Handles right movement
+void ADefaultDevice::MoveRight(float Value)
+{
+	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	{
+		AddMovementInput(GetActorRightVector(), Value);
 	}
 }
 

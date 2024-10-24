@@ -73,9 +73,6 @@ protected:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	// Updates the widget image
-	void UpdateWidgetImage();
-
 	// Function to create bitmap from render target
 	bool CreateBitmapFromRenderTarget(TArray<FColor>& OutBitmap) const;
 };

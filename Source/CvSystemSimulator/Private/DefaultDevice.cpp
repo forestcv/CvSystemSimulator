@@ -1,11 +1,9 @@
 #include "DefaultDevice.h"
 
-// Sets default values
 ADefaultDevice::ADefaultDevice()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Initialize components
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->TargetArmLength = 0.0f;
@@ -22,16 +20,13 @@ ADefaultDevice::ADefaultDevice()
 	SceneCaptureComponent->bCaptureEveryFrame = false;
 	SceneCaptureComponent->bCaptureOnMovement = false;
 
-	// Создание экземпляра контроллера виджета
 	WidgetController = CreateDefaultSubobject<UCameraBroadcastWidgetController>(TEXT("WidgetController"));
 }
 
-// Called when the game starts or when spawned
 void ADefaultDevice::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Initialize the render target
 	if (SceneCaptureComponent)
 	{
 		UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
@@ -39,12 +34,21 @@ void ADefaultDevice::BeginPlay()
 		SceneCaptureComponent->TextureTarget = RenderTarget;
 	}
 
-	// Инициализация виджета через контроллер с передачей размера
 	if (WidgetController)
 	{
-		WidgetController->InitializeWidget(GetWorld(), CameraBroadcastWidget, 
-			FVector2D(CameraMatrixSize.X / DownscaleFactor, CameraMatrixSize.Y / DownscaleFactor));
+		FVector2D WidgetSize = FVector2D(CameraMatrixSize.X / DownscaleFactor, CameraMatrixSize.Y / DownscaleFactor);
+
+		UE_LOG(LogTemp, Warning, TEXT("Initializing WidgetController. CameraBroadcastWidget: %s, WidgetSize: %s"),
+			*CameraBroadcastWidget->GetName(),
+			*WidgetSize.ToString());
+
+		WidgetController->InitializeWidget(GetWorld(), CameraBroadcastWidget, WidgetSize);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("WidgetController is null!"));
+	}
+
 }
 
 // Called every frame
@@ -60,7 +64,8 @@ void ADefaultDevice::Tick(float DeltaTime)
 	if (TimeSinceLastUpdate >= ImageUpdateInterval)
 	{
 		TArray<FColor> Bitmap;
-		if (CreateBitmapFromRenderTarget(Bitmap))
+		if (WidgetController && CreateBitmapFromRenderTarget(Bitmap) && 
+			Bitmap.Num() == CameraMatrixSize.X * CameraMatrixSize.Y)
 		{
 			WidgetController->UpdateWidgetImage(Bitmap, CameraMatrixSize);
 		}
@@ -80,6 +85,9 @@ void ADefaultDevice::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	// Bind movement functions
 	PlayerInputComponent->BindAxis("MoveForward", this, &ADefaultDevice::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ADefaultDevice::MoveRight);
+	PlayerInputComponent->BindAxis("MoveUp", this, &ADefaultDevice::MoveUp);
+
+	PlayerInputComponent->BindAxis("RotateRoll", this, &ADefaultDevice::RotateRoll);
 }
 
 void ADefaultDevice::MoveForward(float Value)
@@ -90,12 +98,27 @@ void ADefaultDevice::MoveForward(float Value)
 	}
 }
 
-// Handles right movement
 void ADefaultDevice::MoveRight(float Value)
 {
 	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
 	{
 		AddMovementInput(GetActorRightVector(), Value);
+	}
+}
+
+void ADefaultDevice::MoveUp(float Value)
+{
+	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	{
+		AddMovementInput(FVector::UpVector, Value);
+	}
+}
+
+void ADefaultDevice::RotateRoll(float Value)
+{
+	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	{
+		AddActorLocalRotation(FRotator(0.0f, 0.0f, Value));
 	}
 }
 

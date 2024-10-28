@@ -54,8 +54,7 @@ protected:
 		TSubclassOf<UUserWidget> CameraBroadcastWidget;
 
 	// Контроллер виджета
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-		UCameraBroadcastWidgetController* WidgetController;
+	UCameraBroadcastWidgetController* WidgetController;
 
 	// Downscale factor for UI resolution, editable from Blueprint
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
@@ -72,6 +71,8 @@ protected:
 	// Handles movement input
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	void MoveUp(float Value);
+	void RotateRoll(float Value);
 
 	// Function to create bitmap from render target
 	bool CreateBitmapFromRenderTarget(TArray<FColor>& OutBitmap) const;

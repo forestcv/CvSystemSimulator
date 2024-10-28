@@ -38,6 +38,14 @@ void UCameraBroadcastWidgetController::UpdateWidgetImage(const TArray<FColor>& B
 	Texture->PlatformData->Mips[0].BulkData.Unlock();
 	Texture->UpdateResource();
 
-	CameraBroadcastImage->SetBrushFromTexture(Texture, true);
+	if (CameraBroadcastImage && Texture)
+	{
+		CameraBroadcastImage->SetBrushFromTexture(Texture, false);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("UCameraBroadcastWidgetController: CameraBroadcastImage or Texture is null!"))
+	}
+
 }
 

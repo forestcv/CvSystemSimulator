@@ -16,6 +16,14 @@ void UCameraBroadcastWidgetController::InitializeWidget(UWorld* World, TSubclass
 		CameraBroadcastWidgetInstance->AddToViewport();
 		CameraBroadcastWidgetInstance->SetDesiredSizeInViewport(WidgetSize);
 
+		FVector2D ScreenSize;
+		GEngine->GameViewport->GetViewportSize(ScreenSize);
+		FVector2D WidgetPosition = FVector2D(
+			PositionOffset.X,
+			PositionOffset.Y);
+
+		CameraBroadcastWidgetInstance->SetPositionInViewport(WidgetPosition);
+
 		CameraBroadcastImage = Cast<UImage>(CameraBroadcastWidgetInstance->GetWidgetFromName(TEXT("CameraBroadcastImage")));
 	}
 }
@@ -28,23 +36,22 @@ void UCameraBroadcastWidgetController::UpdateWidgetImage(const TArray<FColor>& B
 		return;
 	}
 
-	UTexture2D* Texture = UTexture2D::CreateTransient(
-		CameraMatrixSize.X,
-		CameraMatrixSize.Y,
-		PF_B8G8R8A8);
-
-	void* TextureData = Texture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-	FMemory::Memcpy(TextureData, Bitmap.GetData(), Bitmap.Num() * sizeof(FColor));
-	Texture->PlatformData->Mips[0].BulkData.Unlock();
-	Texture->UpdateResource();
-
-	if (CameraBroadcastImage && Texture)
+	if(UTexture2D* Texture = UTexture2D::CreateTransient(
+		CameraMatrixSize.X,CameraMatrixSize.Y, PF_B8G8R8A8); Texture)
 	{
-		CameraBroadcastImage->SetBrushFromTexture(Texture, false);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("UCameraBroadcastWidgetController: CameraBroadcastImage or Texture is null!"))
+		void* TextureData = Texture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+		FMemory::Memcpy(TextureData, Bitmap.GetData(), Bitmap.Num() * sizeof(FColor));
+		Texture->PlatformData->Mips[0].BulkData.Unlock();
+		Texture->UpdateResource();
+
+		if (CameraBroadcastImage && Texture)
+		{
+			CameraBroadcastImage->SetBrushFromTexture(Texture, true);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("UCameraBroadcastWidgetController: CameraBroadcastImage or Texture is null!"))
+		}
 	}
 
 }

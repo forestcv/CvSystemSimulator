@@ -17,8 +17,8 @@ ADefaultDevice::ADefaultDevice()
 
 	SceneCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("SceneCaptureComponent"));
 	SceneCaptureComponent->SetupAttachment(Camera);
-	SceneCaptureComponent->bCaptureEveryFrame = false;
-	SceneCaptureComponent->bCaptureOnMovement = false;
+	//SceneCaptureComponent->bCaptureEveryFrame = false;
+	//SceneCaptureComponent->bCaptureOnMovement = false;
 
 	WidgetController = CreateDefaultSubobject<UCameraBroadcastWidgetController>(TEXT("WidgetController"));
 }
@@ -30,7 +30,7 @@ void ADefaultDevice::BeginPlay()
 	if (SceneCaptureComponent)
 	{
 		UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
-		RenderTarget->InitCustomFormat(CameraMatrixSize.X, CameraMatrixSize.Y, PF_B8G8R8A8, false);
+		RenderTarget->InitCustomFormat(CameraMatrixSize.X, CameraMatrixSize.Y, PF_B8G8R8A8, true);
 		SceneCaptureComponent->TextureTarget = RenderTarget;
 	}
 
@@ -88,6 +88,8 @@ void ADefaultDevice::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis("MoveUp", this, &ADefaultDevice::MoveUp);
 
 	PlayerInputComponent->BindAxis("RotateRoll", this, &ADefaultDevice::RotateRoll);
+	PlayerInputComponent->BindAxis("RotatePitch", this, &ADefaultDevice::RotatePitch);
+	PlayerInputComponent->BindAxis("RotateYaw", this, &ADefaultDevice::RotateYaw);
 }
 
 void ADefaultDevice::MoveForward(float Value)
@@ -119,6 +121,22 @@ void ADefaultDevice::RotateRoll(float Value)
 	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
 	{
 		AddActorLocalRotation(FRotator(0.0f, 0.0f, Value));
+	}
+}
+
+void ADefaultDevice::RotatePitch(float Value)
+{
+	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	{
+		AddActorLocalRotation(FRotator(Value, 0.0f, 0.0f));
+	}
+}
+
+void ADefaultDevice::RotateYaw(float Value)
+{
+	if (FMath::Abs(Value) > KINDA_SMALL_NUMBER)
+	{
+		AddActorLocalRotation(FRotator(0.0f, Value, 0.0f));
 	}
 }
 

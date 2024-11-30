@@ -22,6 +22,9 @@ public:
 	void InitializeWidget(UWorld* World, TSubclassOf<UUserWidget> WidgetClass, FVector2D WidgetSize);
 	void UpdateWidgetImage(const TArray<FColor>& Bitmap, FIntPoint CameraMatrixSize);
 
+protected:
+	FIntPoint PositionOffset{16, 16};
+
 private:
 	UUserWidget* CameraBroadcastWidgetInstance;
 	UImage* CameraBroadcastImage;

@@ -73,6 +73,8 @@ protected:
 	void MoveRight(float Value);
 	void MoveUp(float Value);
 	void RotateRoll(float Value);
+	void RotatePitch(float Value);
+	void RotateYaw(float Value);
 
 	// Function to create bitmap from render target
 	bool CreateBitmapFromRenderTarget(TArray<FColor>& OutBitmap) const;
